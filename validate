@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+set -e # Stop the script if any line results in an error
+
+traces_path="traces"
+output_path="output"
+
+traces=( "4proc_validation" "8proc_validation" "16proc_validation")
+protocols=( "MI" "MESI" "MOSI" "MOESIF" )
+
+mkdir -p "$output_path"
+
+clear
+
+echo "Running make..."
+echo "==============="
+make clean
+make
+
+clear
+
+set +e
+
+echo "Running traces:"
+echo "==============="
+for protocol in "${protocols[@]}"
+do
+    echo "$protocol:"
+    for trace in "${traces[@]}"
+    do
+        mkdir -p "$output_path/$trace"
+        echo -n "    $trace: "
+        ./sim_trace -t "$traces_path/$trace/" -p "$protocol" &> "$output_path/$trace/${protocol}.out"
+        diff -w "$traces_path/$trace/${protocol}_validation.txt" "$output_path/$trace/${protocol}.out" > "$output_path/$trace/${protocol}.diff"
+        if [ $(wc -l < "$output_path/$trace/${protocol}.diff") -eq 0 ]
+        then
+            echo "Good"
+        else
+            echo "Failed"
+            echo "        Please check ${protocol}.diff in \"$output_path/$trace\""
+        fi
+    done
+done

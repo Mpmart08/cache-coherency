@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -e # Stop the script if any line results in an error
+
+traces_path="traces"
+output_path="output"
+
+experiments=( "experiment1" "experiment2" "experiment3" "experiment4" "experiment5" "experiment6" "experiment7" "experiment8" )
+protocols=( "MESI" "MOSI" "MOESIF" )
+
+mkdir -p "$output_path"
+
+set +e
+
+for protocol in "${protocols[@]}"
+do
+    echo "$protocol:"
+    for experiment in "${experiments[@]}"
+    do
+        mkdir -p "$output_path/$experiment"
+        echo -n "    $experiment: "
+        ./sim_trace -t "$traces_path/$experiment/" -p "$protocol" &> "$output_path/$experiment/${protocol}.out"
+        echo "Done"
+    done
+done
